@@ -1,0 +1,28 @@
+"""
+配置管理模块
+"""
+import os
+from pathlib import Path
+from typing import Optional
+
+
+class Settings:
+    """应用配置"""
+    
+    def __init__(self):
+        """初始化配置"""
+        # OpenAI API 配置
+        self.super_mind_api_key: Optional[str] = os.getenv("SUPER_MIND_API_KEY")
+        self.openai_base_url: str = os.getenv(
+            "OPENAI_BASE_URL",
+            "https://space.ai-builders.com/backend/v1"
+        )
+        self.openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        
+        # 数据库配置
+        db_path_str = os.getenv("DB_PATH")
+        self.db_path: Optional[Path] = Path(db_path_str) if db_path_str else None
+
+
+# 全局配置实例
+settings = Settings()

@@ -4,6 +4,13 @@
 import os
 from pathlib import Path
 from typing import Optional
+from dotenv import load_dotenv
+
+# 加载 .env 文件
+# config.py 在 backend/config.py，所以需要回到项目根目录
+env_path = Path(__file__).parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
 
 
 class Settings:
@@ -17,7 +24,7 @@ class Settings:
             "OPENAI_BASE_URL",
             "https://space.ai-builders.com/backend/v1"
         )
-        self.openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        self.openai_model: str = os.getenv("OPENAI_MODEL", "supermind-agent-v1")
         
         # 数据库配置
         db_path_str = os.getenv("DB_PATH")

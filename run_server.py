@@ -1,0 +1,24 @@
+"""
+启动 FastAPI 服务（推荐方式）
+"""
+import sys
+from pathlib import Path
+
+# 确保项目根目录在 Python 路径中
+project_root = Path(__file__).parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+# 直接导入 app，避免字符串路径问题
+from backend.api.routes import app
+import uvicorn
+
+if __name__ == "__main__":
+    uvicorn.run(
+        app,  # 直接传递 app 对象，而不是字符串
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info",
+    )
+

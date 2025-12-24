@@ -9,6 +9,7 @@
 ### CanonicalState（唯一真相状态）
 
 包含以下部分：
+
 - **meta**: 元信息（story_id, canon_version, turn, last_event_id, updated_at）
 - **time**: 时间状态（calendar, anchor）
 - **player**: 玩家状态（id, name, location_id, party, inventory）
@@ -19,6 +20,7 @@
 ### Event（事件）
 
 驱动状态变更的最小单元，包含：
+
 - **event_id**: 唯一标识符（格式：`evt_{turn}_{timestamp}_{hash}`）
 - **turn**: 轮次
 - **time**: 事件时间（label, order）
@@ -33,6 +35,7 @@
 ### StatePatch（状态补丁）
 
 用于增量更新 Canonical State：
+
 - **entity_updates**: 实体更新字典
 - **time_update**: 时间更新
 - **quest_updates**: 任务更新列表
@@ -44,6 +47,7 @@
 ### 严格校验
 
 1. **唯一物品必须指定 owner_id**
+
    ```python
    # Item.unique = True 时，owner_id 必填
    Item(id="sword_001", name="青釭剑", unique=True, owner_id="player_001")  # ✅
@@ -51,6 +55,7 @@
    ```
 
 2. **物品必须指定 owner_id 或 location_id**
+
    ```python
    # 至少有一个
    Item(id="item_001", owner_id="char_001")  # ✅
@@ -59,18 +64,20 @@
    ```
 
 3. **引用完整性验证**
+
    - player.location_id 必须在 locations 中存在
    - player.party 中的角色必须在 characters 中存在
    - player.inventory 中的物品必须在 items 中存在
    - 所有实体的引用必须有效
 
 4. **事件类型相关的 payload 验证**
+
    - OWNERSHIP_CHANGE: 必须包含 item_id, old_owner_id, new_owner_id
    - DEATH: 必须包含 character_id
    - TRAVEL: 必须包含 character_id, from_location_id, to_location_id
    - FACTION_CHANGE: 必须包含 character_id, old_faction_id, new_faction_id
-   - QUEST_*: 必须包含 quest_id
-   - ITEM_*: 必须包含 item_id
+   - QUEST\_\*: 必须包含 quest_id
+   - ITEM\_\*: 必须包含 item_id
    - TIME_ADVANCE: 必须包含 time_anchor
 
 5. **事件可追溯性验证**
@@ -150,4 +157,3 @@ python scripts/export_schemas.py
 ```
 
 生成的 Schema 文件位于 `schemas/` 目录。
-

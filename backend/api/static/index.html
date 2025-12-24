@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Immersive Story Memory Engine - 测试界面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .result pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        
+        .state-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .state-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        
+        .state-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .state-card p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Immersive Story Memory Engine</h1>
+            <p>沉浸式小说记忆引擎 - API 测试界面</p>
+        </div>
+        
+        <div class="content">
+            <!-- 获取状态 -->
+            <div class="section">
+                <h2>1. 获取状态 (GET /state/{story_id})</h2>
+                <div class="form-group">
+                    <label>Story ID:</label>
+                    <input type="text" id="storyId" value="sanguo_test" placeholder="输入 story_id">
+                </div>
+                <button onclick="getState()">获取状态</button>
+                <div id="stateResult" class="result" style="display: none;"></div>
+            </div>
+            
+            <!-- 处理草稿 -->
+            <div class="section">
+                <h2>2. 处理草稿 (POST /draft/process)</h2>
+                <div class="form-group">
+                    <label>Story ID:</label>
+                    <input type="text" id="draftStoryId" value="sanguo_test" placeholder="输入 story_id">
+                </div>
+                <div class="form-group">
+                    <label>用户消息:</label>
+                    <input type="text" id="userMessage" value="玩家向曹操打招呼" placeholder="输入用户消息">
+                </div>
+                <div class="form-group">
+                    <label>助手草稿:</label>
+                    <textarea id="assistantDraft" placeholder="输入助手生成的草稿">玩家向曹操打招呼，曹操点头回应，说道：'欢迎来到洛阳。'</textarea>
+                </div>
+                <button onclick="processDraft()">处理草稿</button>
+                <div id="draftResult" class="result" style="display: none;"></div>
+            </div>
+            
+            <!-- RAG 查询 -->
+            <div class="section">
+                <h2>3. RAG 查询 (POST /rag/query)</h2>
+                <div class="form-group">
+                    <label>Story ID:</label>
+                    <input type="text" id="ragStoryId" value="sanguo_test" placeholder="输入 story_id">
+                </div>
+                <div class="form-group">
+                    <label>查询:</label>
+                    <input type="text" id="ragQuery" value="曹操的武器是什么？" placeholder="输入查询文本">
+                </div>
+                <button onclick="ragQuery()">查询</button>
+                <div id="ragResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = window.location.origin;
+        
+        async function getState() {
+            const storyId = document.getElementById('storyId').value;
+            const resultDiv = document.getElementById('stateResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = '<p>加载中...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/state/${storyId}`);
+                const data = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h3>✅ 状态获取成功</h3>
+                    <div class="state-panel">
+                        <div class="state-card">
+                            <h3>元信息</h3>
+                            <p><strong>Story ID:</strong> ${data.meta.story_id}</p>
+                            <p><strong>Turn:</strong> ${data.meta.turn}</p>
+                            <p><strong>最后事件:</strong> ${data.meta.last_event_id || '无'}</p>
+                        </div>
+                        <div class="state-card">
+                            <h3>时间</h3>
+                            <p><strong>日历:</strong> ${data.time.calendar}</p>
+                            <p><strong>Order:</strong> ${data.time.anchor.order}</p>
+                        </div>
+                        <div class="state-card">
+                            <h3>玩家</h3>
+                            <p><strong>名称:</strong> ${data.player.name}</p>
+                            <p><strong>位置:</strong> ${data.player.location_id}</p>
+                            <p><strong>物品:</strong> ${data.player.inventory.length} 个</p>
+                        </div>
+                    </div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ 错误</h3><pre>${error.message}</pre>`;
+            }
+        }
+        
+        async function processDraft() {
+            const storyId = document.getElementById('draftStoryId').value;
+            const userMessage = document.getElementById('userMessage').value;
+            const assistantDraft = document.getElementById('assistantDraft').value;
+            const resultDiv = document.getElementById('draftResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = '<p>处理中，请稍候...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/draft/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        story_id: storyId,
+                        user_message: userMessage,
+                        assistant_draft: assistantDraft,
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                let statusClass = 'success';
+                let statusIcon = '✅';
+                if (data.final_action === 'REWRITE' || data.final_action === 'ASK_USER') {
+                    statusClass = 'error';
+                    statusIcon = '⚠️';
+                }
+                
+                resultDiv.className = `result ${statusClass}`;
+                resultDiv.innerHTML = `
+                    <h3>${statusIcon} 处理结果: ${data.final_action}</h3>
+                    ${data.questions ? `<p><strong>需要澄清的问题:</strong></p><ul>${data.questions.map(q => `<li>${q}</li>`).join('')}</ul>` : ''}
+                    ${data.rewrite_instructions ? `<p><strong>重写指令:</strong> ${data.rewrite_instructions}</p>` : ''}
+                    ${data.recent_events ? `<p><strong>最近事件:</strong> ${data.recent_events.length} 个</p>` : ''}
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ 错误</h3><pre>${error.message}</pre>`;
+            }
+        }
+        
+        async function ragQuery() {
+            const storyId = document.getElementById('ragStoryId').value;
+            const query = document.getElementById('ragQuery').value;
+            const resultDiv = document.getElementById('ragResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = '<p>查询中...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/rag/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        story_id: storyId,
+                        query: query,
+                        top_k: 5,
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h3>✅ 查询成功</h3>
+                    <p><strong>查询:</strong> ${data.query}</p>
+                    <p><strong>结果数量:</strong> ${data.results.length}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ 错误</h3><pre>${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>
+

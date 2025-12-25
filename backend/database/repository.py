@@ -4,11 +4,68 @@ Repository 类：统一的数据访问接口
 """
 import json
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Set
 from pathlib import Path
 
-from ..models import CanonicalState, Event, MetaInfo, TimeState, TimeAnchor, PlayerState, Entities, QuestState, Constraints
+from ..models import CanonicalState, Event, MetaInfo, TimeState, TimeAnchor, PlayerState, Entities, QuestState, Constraints, Location
 from .connection import get_db_connection, init_database
+from ..core.state_manager import _ensure_location_references
+
+
+def _fix_missing_locations_in_json(state_json: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    在JSON数据中修复缺失的location引用（在Pydantic验证之前）
+    
+    Args:
+        state_json: 状态的JSON字典
+        
+    Returns:
+        修复后的JSON字典
+    """
+    if "entities" not in state_json:
+        return state_json
+    
+    entities = state_json["entities"]
+    if "locations" not in entities:
+        entities["locations"] = {}
+    
+    locations = entities["locations"]
+    required_locations: Set[str] = set()
+    
+    # Player的location_id
+    if "player" in state_json and state_json["player"].get("location_id"):
+        required_locations.add(state_json["player"]["location_id"])
+    
+    # 所有角色的location_id
+    if "characters" in entities:
+        for char in entities["characters"].values():
+            if isinstance(char, dict) and char.get("location_id"):
+                required_locations.add(char["location_id"])
+    
+    # 所有物品的location_id和owner_id（如果owner是location）
+    if "items" in entities:
+        for item in entities["items"].values():
+            if isinstance(item, dict):
+                if item.get("location_id"):
+                    required_locations.add(item["location_id"])
+                owner_id = item.get("owner_id")
+                if owner_id:
+                    # 如果owner_id不在characters中，可能是location
+                    characters = entities.get("characters", {})
+                    if owner_id not in characters:
+                        required_locations.add(owner_id)
+    
+    # 创建缺失的location
+    for loc_id in required_locations:
+        if loc_id not in locations:
+            locations[loc_id] = {
+                "id": loc_id,
+                "name": loc_id,  # 使用id作为name（可以后续更新）
+                "parent_location_id": None,
+                "metadata": {}
+            }
+    
+    return state_json
 
 
 class Repository:
@@ -32,6 +89,9 @@ class Repository:
             
         Returns:
             CanonicalState 对象，如果不存在则返回 None
+            
+        Raises:
+            ValueError: 如果 state JSON 损坏且无法恢复
         """
         async with get_db_connection(self.db_path) as db:
             async with db.execute(
@@ -42,8 +102,28 @@ class Repository:
                 if row is None:
                     return None
                 
-                state_json = json.loads(row[0])
-                return CanonicalState.model_validate(state_json)
+                try:
+                    state_json = json.loads(row[0])
+                except json.JSONDecodeError as e:
+                    # JSON 解析失败，state 可能损坏
+                    raise ValueError(
+                        f"State JSON 损坏，无法解析 (story_id: {story_id}): {str(e)}\n"
+                        f"建议：删除损坏的状态并重新初始化，或从事件日志重建状态"
+                    ) from e
+                
+                # 在验证之前修复缺失的location（避免Pydantic验证失败）
+                state_json = _fix_missing_locations_in_json(state_json)
+                
+                try:
+                    state = CanonicalState.model_validate(state_json)
+                except Exception as e:
+                    # Pydantic 验证失败，state 结构可能损坏
+                    raise ValueError(
+                        f"State 结构损坏，无法验证 (story_id: {story_id}): {str(e)}\n"
+                        f"建议：删除损坏的状态并重新初始化，或从事件日志重建状态"
+                    ) from e
+                
+                return state
     
     async def save_state(self, story_id: str, state: CanonicalState) -> None:
         """
@@ -54,6 +134,9 @@ class Repository:
             state: CanonicalState 对象
         """
         async with get_db_connection(self.db_path) as db:
+            # 确保所有引用的location都存在（修复引用完整性）
+            _ensure_location_references(state)
+            
             # 更新 state 的 meta 信息
             state.meta.updated_at = datetime.now()
             

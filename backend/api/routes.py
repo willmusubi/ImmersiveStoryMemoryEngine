@@ -10,7 +10,7 @@ from pathlib import Path
 from ..database import Repository
 from ..extractor import EventExtractor
 from ..gate import ConsistencyGate
-from ..core.state_manager import apply_multiple_patches
+from ..core.state_manager import apply_multiple_patches, _ensure_location_references
 from ..models import CanonicalState
 from ..rag import RAGService
 from .models import (
@@ -74,7 +74,15 @@ async def get_state(
     Returns:
         CanonicalState: 当前状态
     """
-    state = await repo.get_state(story_id)
+    try:
+        state = await repo.get_state(story_id)
+    except ValueError as e:
+        # State 损坏，尝试重新初始化
+        error_msg = str(e)
+        print(f"Warning: State corrupted for {story_id}, reinitializing: {error_msg}")
+        # 可以选择删除损坏的状态并重新初始化
+        # 这里我们直接初始化一个新状态
+        state = await repo.initialize_state(story_id)
     
     if state is None:
         # 如果状态不存在，初始化一个默认状态
@@ -215,6 +223,9 @@ async def process_draft(
             # 获取最近事件
             recent_events = await repo.list_recent_events(request.story_id, limit=10)
             
+            # 确保所有引用的location都存在（修复引用完整性）
+            _ensure_location_references(updated_state)
+            
             return DraftProcessResponse(
                 final_action="PASS",
                 state=updated_state,
@@ -277,6 +288,9 @@ async def process_draft(
                 # 获取最近事件
                 recent_events = await repo.list_recent_events(request.story_id, limit=10)
                 
+                # 确保所有引用的location都存在（修复引用完整性）
+                _ensure_location_references(updated_state)
+                
                 return DraftProcessResponse(
                     final_action="AUTO_FIX",
                     state=updated_state,
@@ -290,6 +304,9 @@ async def process_draft(
                     await repo.append_event(request.story_id, event)
                 await repo.save_state(request.story_id, updated_state)
                 recent_events = await repo.list_recent_events(request.story_id, limit=10)
+                
+                # 确保所有引用的location都存在（修复引用完整性）
+                _ensure_location_references(updated_state)
                 
                 return DraftProcessResponse(
                     final_action="PASS",

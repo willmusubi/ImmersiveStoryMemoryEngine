@@ -87,6 +87,8 @@ class EventExtractor:
         function_def = self._get_function_definition()
         json_schema = self._get_json_schema()
         
+        extracted_data = None
+        
         try:
             # 先尝试 function calling
             extracted_data = await self._call_llm_with_function_calling(
@@ -96,12 +98,18 @@ class EventExtractor:
             )
         except Exception as e:
             print(f"Function calling failed: {e}, falling back to JSON mode...")
-            # 回退到 JSON 模式
-            extracted_data = await self._call_llm_with_retry(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                json_schema=json_schema,
-            )
+            try:
+                # 回退到 JSON 模式
+                extracted_data = await self._call_llm_with_retry(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    json_schema=json_schema,
+                )
+            except Exception as e2:
+                # 如果 JSON 模式也失败，记录错误但继续处理
+                print(f"JSON mode also failed: {e2}")
+                print("Will create default event to ensure workflow continues")
+                extracted_data = None
         
         # 解析并转换为 Event 对象
         events = []

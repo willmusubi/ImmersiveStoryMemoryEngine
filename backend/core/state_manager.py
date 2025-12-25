@@ -4,7 +4,7 @@ State Manager: 状态管理核心逻辑
 """
 import copy
 from datetime import datetime
-from typing import List
+from typing import List, Set
 
 from ..models import (
     CanonicalState,
@@ -18,6 +18,48 @@ from ..models import (
     Faction,
     Quest,
 )
+
+
+def _ensure_location_references(state: CanonicalState) -> None:
+    """
+    确保所有引用的location都存在，如果不存在则创建默认location
+    
+    Args:
+        state: CanonicalState 对象（会被修改）
+    """
+    # 收集所有需要的location_id
+    required_locations: Set[str] = set()
+    
+    # Player的location_id
+    if state.player.location_id:
+        required_locations.add(state.player.location_id)
+    
+    # 所有角色的location_id
+    for char in state.entities.characters.values():
+        if char.location_id:
+            required_locations.add(char.location_id)
+    
+    # 所有物品的location_id和owner_id（如果owner是location）
+    for item in state.entities.items.values():
+        if item.location_id:
+            required_locations.add(item.location_id)
+        if item.owner_id and item.owner_id in state.entities.locations:
+            # owner_id是location，已经存在
+            pass
+        elif item.owner_id and item.owner_id not in state.entities.characters:
+            # owner_id可能是location但不存在，需要创建
+            required_locations.add(item.owner_id)
+    
+    # 创建缺失的location
+    for loc_id in required_locations:
+        if loc_id not in state.entities.locations:
+            # 创建默认location
+            state.entities.locations[loc_id] = Location(
+                id=loc_id,
+                name=loc_id,  # 使用id作为name（可以后续更新）
+                parent_location_id=None,
+                metadata={}
+            )
 
 
 def apply_state_patch(
@@ -218,6 +260,9 @@ def apply_state_patch(
     new_state.meta.last_event_id = event_id
     new_state.meta.updated_at = datetime.now()
     
+    # 确保所有引用的location都存在（修复引用完整性）
+    _ensure_location_references(new_state)
+    
     return new_state
 
 
@@ -256,6 +301,9 @@ def apply_multiple_patches(
     current_state.meta.turn = max_turn
     current_state.meta.last_event_id = last_event_id
     current_state.meta.updated_at = datetime.now()
+    
+    # 确保所有引用的location都存在（修复引用完整性）
+    _ensure_location_references(current_state)
     
     return current_state
 

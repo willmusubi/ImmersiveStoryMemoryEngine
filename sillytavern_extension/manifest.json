@@ -1,0 +1,21 @@
+{
+  "name": "Immersive Story Memory Engine",
+  "display_name": "Immersive Story Memory Engine",
+  "version": "1.0.0",
+  "description": "为SillyTavern提供沉浸式小说记忆引擎支持，自动管理故事状态、事件提取和一致性校验",
+  "author": "ImmersiveStoryMemoryEngine",
+  "author_url": "",
+  "extension_api_version": "1.0.0",
+  "license": "MIT",
+  "homepage": "",
+  "repository": "",
+  "bugs": "",
+  "tags": ["memory", "state", "story", "consistency"],
+  "scripts": [
+    "index.js"
+  ],
+  "styles": [
+    "styles.css"
+  ]
+}
+

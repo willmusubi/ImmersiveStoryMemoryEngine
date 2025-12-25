@@ -1,0 +1,208 @@
+/* Immersive Story Memory Engine - SillyTavern Extension Styles */
+
+.memory-engine-panel {
+    background: var(--SmartThemeBodyColor, #1e1e1e);
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px;
+    font-size: 13px;
+    color: var(--SmartThemeBodyText, #ccc);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.memory-engine-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #333);
+}
+
+.memory-engine-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--SmartThemeBodyText, #fff);
+}
+
+.memory-engine-toggle {
+    background: var(--SmartThemeBlurTint, #2a2a2a);
+    border: 1px solid var(--SmartThemeBorderColor, #444);
+    color: var(--SmartThemeBodyText, #ccc);
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.memory-engine-toggle:hover {
+    background: var(--SmartThemeBlurTint, #3a3a3a);
+}
+
+.memory-engine-content {
+    display: block;
+}
+
+.memory-engine-section {
+    margin-bottom: 16px;
+}
+
+.memory-engine-section:last-child {
+    margin-bottom: 0;
+}
+
+.memory-engine-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--SmartThemeBodyText, #fff);
+}
+
+.memory-engine-summary {
+    background: var(--SmartThemeBlurTint, #2a2a2a);
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: var(--SmartThemeBodyText, #ccc);
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+}
+
+.memory-engine-events {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.memory-engine-event-item {
+    background: var(--SmartThemeBlurTint, #2a2a2a);
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.memory-engine-event-item:last-child {
+    margin-bottom: 0;
+}
+
+.event-summary {
+    color: var(--SmartThemeBodyText, #fff);
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.event-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--SmartThemeBodyText, #999);
+}
+
+.event-type {
+    background: var(--SmartThemeBlurTint, #3a3a3a);
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.event-turn {
+    color: var(--SmartThemeBodyText, #999);
+}
+
+/* 设置UI样式 */
+.memory-engine-settings {
+    padding: 16px;
+    background: var(--SmartThemeBodyColor, #1e1e1e);
+    border-radius: 8px;
+    margin: 16px 0;
+}
+
+.memory-engine-settings h3 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    color: var(--SmartThemeBodyText, #fff);
+}
+
+.memory-engine-setting-item {
+    margin-bottom: 12px;
+}
+
+.memory-engine-setting-item label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--SmartThemeBodyText, #ccc);
+    font-weight: 500;
+}
+
+.memory-engine-setting-item input {
+    width: 100%;
+    padding: 8px;
+    background: var(--SmartThemeBlurTint, #2a2a2a);
+    border: 1px solid var(--SmartThemeBorderColor, #444);
+    border-radius: 4px;
+    color: var(--SmartThemeBodyText, #fff);
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.memory-engine-setting-item input:focus {
+    outline: none;
+    border-color: var(--SmartThemeBlurTint, #555);
+}
+
+.memory-engine-save-btn {
+    background: var(--SmartThemeBlurTint, #3a3a3a);
+    border: 1px solid var(--SmartThemeBorderColor, #444);
+    color: var(--SmartThemeBodyText, #fff);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s;
+    margin-top: 8px;
+}
+
+.memory-engine-save-btn:hover {
+    background: var(--SmartThemeBlurTint, #4a4a4a);
+}
+
+/* 滚动条样式 */
+.memory-engine-summary::-webkit-scrollbar,
+.memory-engine-events::-webkit-scrollbar {
+    width: 6px;
+}
+
+.memory-engine-summary::-webkit-scrollbar-track,
+.memory-engine-events::-webkit-scrollbar-track {
+    background: var(--SmartThemeBlurTint, #2a2a2a);
+    border-radius: 3px;
+}
+
+.memory-engine-summary::-webkit-scrollbar-thumb,
+.memory-engine-events::-webkit-scrollbar-thumb {
+    background: var(--SmartThemeBorderColor, #555);
+    border-radius: 3px;
+}
+
+.memory-engine-summary::-webkit-scrollbar-thumb:hover,
+.memory-engine-events::-webkit-scrollbar-thumb:hover {
+    background: var(--SmartThemeBorderColor, #666);
+}
+

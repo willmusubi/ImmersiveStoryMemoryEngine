@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# 环境变量（敏感信息）
+.env
+.env.local
+.env.*.local
+
+# 但保留示例文件
+!.env.example
+
+# 数据库
+*.db
+*.sqlite
+*.sqlite3
+data/databases/*.db
+
+# 但保留数据库目录结构
+!data/databases/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 测试和覆盖率
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# 日志
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.bak
+*.cache
+
+# FAISS 索引（可能很大）
+# 如果需要，可以取消注释以下行
+# data/indices/*.index
+
+# 其他
+dist/
+build/
+*.egg-info/
+

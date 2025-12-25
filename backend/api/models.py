@@ -18,6 +18,8 @@ class RAGQueryResponse(BaseModel):
     """RAG 查询响应"""
     results: List[Dict[str, Any]] = Field(default_factory=list, description="检索结果")
     query: str = Field(..., description="查询文本")
+    error: Optional[str] = Field(default=None, description="错误信息（如果有）")
+    warning: Optional[str] = Field(default=None, description="警告信息（如果有）")
 
 
 class DraftProcessRequest(BaseModel):

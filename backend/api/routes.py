@@ -12,6 +12,7 @@ from ..extractor import EventExtractor
 from ..gate import ConsistencyGate
 from ..core.state_manager import apply_multiple_patches
 from ..models import CanonicalState
+from ..rag import RAGService
 from .models import (
     RAGQueryRequest,
     RAGQueryResponse,
@@ -51,6 +52,12 @@ def get_gate() -> ConsistencyGate:
     return ConsistencyGate()
 
 
+# 依赖注入：获取 RAGService
+def get_rag_service() -> RAGService:
+    """获取 RAGService 实例"""
+    return RAGService()
+
+
 # ==================== 端点 ====================
 
 @app.get("/state/{story_id}", response_model=CanonicalState)
@@ -79,28 +86,60 @@ async def get_state(
 @app.post("/rag/query", response_model=RAGQueryResponse)
 async def rag_query(
     request: RAGQueryRequest,
+    rag_service: RAGService = Depends(get_rag_service),
 ):
     """
-    RAG 查询（占位实现）
+    RAG 查询：从 World Bible 索引中检索相关信息
     
     Args:
         request: RAG 查询请求
+        rag_service: RAG 服务实例
         
     Returns:
         RAGQueryResponse: 检索结果
     """
-    # TODO: 实现 RAG 查询逻辑
-    # 这里先返回占位响应
-    return RAGQueryResponse(
-        query=request.query,
-        results=[
-            {
-                "text": f"检索结果占位（查询：{request.query}）",
-                "score": 0.9,
-                "metadata": {}
-            }
-        ]
-    )
+    try:
+        results = rag_service.query(
+            story_id=request.story_id,
+            query_text=request.query,
+            top_k=request.top_k,
+        )
+        
+        return RAGQueryResponse(
+            query=request.query,
+            results=results,
+            error=None,
+            warning=None if results else "未找到相关结果，可能需要调整查询或重新创建索引",
+        )
+    except FileNotFoundError as e:
+        # 索引文件不存在，返回错误信息
+        error_msg = (
+            f"索引文件不存在。请先运行以下命令创建索引：\n"
+            f"python scripts/world_bible_indexer.py \\\n"
+            f"  --notes_folder <笔记文件夹路径> \\\n"
+            f"  --index_out_dir data/indices \\\n"
+            f"  --story_id {request.story_id}\n\n"
+            f"详细错误: {str(e)}"
+        )
+        return RAGQueryResponse(
+            query=request.query,
+            results=[],
+            error=error_msg,
+            warning=None,
+        )
+    except ValueError as e:
+        # API key 未设置等配置错误
+        raise HTTPException(
+            status_code=500,
+            detail=f"配置错误: {str(e)}"
+        )
+    except Exception as e:
+        import traceback
+        error_detail = f"RAG 查询失败: {str(e)}\n{traceback.format_exc()}"
+        raise HTTPException(
+            status_code=500,
+            detail=error_detail
+        )
 
 
 @app.post("/draft/process", response_model=DraftProcessResponse)

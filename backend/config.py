@@ -29,6 +29,15 @@ class Settings:
         # 数据库配置
         db_path_str = os.getenv("DB_PATH")
         self.db_path: Optional[Path] = Path(db_path_str) if db_path_str else None
+        
+        # RAG 索引配置
+        index_base_dir_str = os.getenv("RAG_INDEX_BASE_DIR")
+        if index_base_dir_str:
+            self.rag_index_base_dir: Optional[Path] = Path(index_base_dir_str)
+        else:
+            # 默认：项目根目录/data/indices
+            project_root = Path(__file__).parent.parent
+            self.rag_index_base_dir = project_root / "data" / "indices"
 
 
 # 全局配置实例

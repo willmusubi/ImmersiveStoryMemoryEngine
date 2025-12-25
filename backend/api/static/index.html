@@ -181,7 +181,7 @@
                 <h2>1. 获取状态 (GET /state/{story_id})</h2>
                 <div class="form-group">
                     <label>Story ID:</label>
-                    <input type="text" id="storyId" value="sanguo_test" placeholder="输入 story_id">
+                    <input type="text" id="storyId" value="sanguo_test_baihua" placeholder="输入 story_id">
                 </div>
                 <button onclick="getState()">获取状态</button>
                 <div id="stateResult" class="result" style="display: none;"></div>
@@ -192,7 +192,7 @@
                 <h2>2. 处理草稿 (POST /draft/process)</h2>
                 <div class="form-group">
                     <label>Story ID:</label>
-                    <input type="text" id="draftStoryId" value="sanguo_test" placeholder="输入 story_id">
+                    <input type="text" id="draftStoryId" value="sanguo_test_baihua" placeholder="输入 story_id">
                 </div>
                 <div class="form-group">
                     <label>用户消息:</label>
@@ -211,11 +211,14 @@
                 <h2>3. RAG 查询 (POST /rag/query)</h2>
                 <div class="form-group">
                     <label>Story ID:</label>
-                    <input type="text" id="ragStoryId" value="sanguo_test" placeholder="输入 story_id">
+                    <input type="text" id="ragStoryId" value="sanguo_test_baihua" placeholder="输入 story_id (推荐: sanguo_test_baihua 白话文版本)">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        可用索引: <strong>sanguo_test_baihua</strong> (白话文版本，推荐) | <strong>sanguo_test</strong> (古文版本)
+                    </small>
                 </div>
                 <div class="form-group">
                     <label>查询:</label>
-                    <input type="text" id="ragQuery" value="曹操的武器是什么？" placeholder="输入查询文本">
+                    <input type="text" id="ragQuery" value="十常侍是谁" placeholder="输入查询文本">
                 </div>
                 <button onclick="ragQuery()">查询</button>
                 <div id="ragResult" class="result" style="display: none;"></div>
@@ -336,18 +339,60 @@
                     }),
                 });
                 
+                // 检查响应状态
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const data = await response.json();
+                
+                // 检查数据格式
+                if (!data || !Array.isArray(data.results)) {
+                    throw new Error('响应格式错误：results 不是数组');
+                }
+                
+                // 检查是否有错误
+                if (data.error) {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ 错误</h3>
+                        <pre style="white-space: pre-wrap; background: #fee; padding: 10px; border-radius: 4px;">${data.error}</pre>
+                    `;
+                    return;
+                }
                 
                 resultDiv.className = 'result success';
                 resultDiv.innerHTML = `
                     <h3>✅ 查询成功</h3>
-                    <p><strong>查询:</strong> ${data.query}</p>
+                    <p><strong>查询:</strong> ${data.query || query}</p>
                     <p><strong>结果数量:</strong> ${data.results.length}</p>
-                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    ${data.warning ? `<p style="color: orange;">⚠️ ${data.warning}</p>` : ''}
+                    ${data.results.length > 0 ? `
+                        <div style="margin-top: 10px;">
+                            <h4>检索结果:</h4>
+                            ${data.results.map((result, idx) => `
+                                <div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                                    <p><strong>结果 ${idx + 1}</strong> 
+                                        (距离: ${result.score ? result.score.toFixed(4) : 'N/A'}，越小越相似
+                                        ${result.keyword_matches !== undefined ? `，关键词匹配: ${result.keyword_matches.toFixed(1)}` : ''})
+                                    </p>
+                                    <p><strong>文件:</strong> ${result.metadata?.file || 'N/A'}</p>
+                                    <p><strong>标题:</strong> ${result.metadata?.heading || 'N/A'}</p>
+                                    <p><strong>文本预览:</strong> ${result.text ? result.text.substring(0, 200) + '...' : 'N/A'}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p>未找到相关结果</p>'}
+                    <details style="margin-top: 10px;">
+                        <summary>完整响应数据</summary>
+                        <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
+                    </details>
                 `;
             } catch (error) {
                 resultDiv.className = 'result error';
                 resultDiv.innerHTML = `<h3>❌ 错误</h3><pre>${error.message}</pre>`;
+                console.error('RAG 查询错误:', error);
             }
         }
     </script>
